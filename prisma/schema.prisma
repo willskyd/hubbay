@@ -1,0 +1,240 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+enum DishCategory {
+  STARTERS
+  MAINS
+  GRILLS
+  BOWLS
+  SIDES
+  DESSERTS
+  DRINKS
+}
+
+enum OrderType {
+  PICKUP
+  DELIVERY
+}
+
+enum OrderStatus {
+  PENDING
+  PREPARING
+  READY
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PARTIALLY_PAID
+  PAID
+  FAILED
+}
+
+enum WalletTxnType {
+  DEPOSIT
+  DEBIT
+  CREDIT
+}
+
+enum WalletTxnStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum ComplaintStatus {
+  OPEN
+  IN_REVIEW
+  RESOLVED
+}
+
+model User {
+  id            String              @id @default(auto()) @map("_id") @db.ObjectId
+  name          String?
+  email         String?             @unique
+  passwordHash  String?
+  emailVerified DateTime?
+  image         String?
+  role          Role                @default(CUSTOMER)
+  accounts      Account[]
+  sessions      Session[]
+  wallet        Wallet?
+  orders        Order[]
+  reviews       Review[]
+  walletTxns    WalletTransaction[]
+  complaints    Complaint[]
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+}
+
+model Account {
+  id                String @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String @db.ObjectId
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User   @relation(fields: [userId], references: [id])
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  sessionToken String   @unique
+  userId       String   @db.ObjectId
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id])
+}
+
+model VerificationToken {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Wallet {
+  id           String              @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String              @unique @db.ObjectId
+  balanceKobo  Int                 @default(0)
+  transactions WalletTransaction[]
+  user         User                @relation(fields: [userId], references: [id])
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+}
+
+model WalletTransaction {
+  id          String          @id @default(auto()) @map("_id") @db.ObjectId
+  walletId    String          @db.ObjectId
+  userId      String          @db.ObjectId
+  orderId     String?         @db.ObjectId
+  type        WalletTxnType
+  status      WalletTxnStatus @default(PENDING)
+  amountKobo  Int
+  reference   String          @unique
+  description String?
+  metadata    Json?
+  wallet      Wallet          @relation(fields: [walletId], references: [id])
+  user        User            @relation(fields: [userId], references: [id])
+  order       Order?          @relation(fields: [orderId], references: [id])
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([userId, createdAt])
+}
+
+model Dish {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  slug        String       @unique
+  name        String
+  description String
+  priceKobo   Int
+  imageUrl    String
+  category    DishCategory
+  spiceLevel  Int          @default(1)
+  prepTimeMin Int          @default(18)
+  isAvailable Boolean      @default(true)
+  tags        String[]
+  calories    Int?
+  orderItems  OrderItem[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Order {
+  id              String              @id @default(auto()) @map("_id") @db.ObjectId
+  orderNumber     String              @unique
+  userId          String              @db.ObjectId
+  orderType       OrderType
+  status          OrderStatus         @default(PENDING)
+  paymentStatus   PaymentStatus       @default(UNPAID)
+  subtotalKobo    Int
+  deliveryFeeKobo Int                 @default(0)
+  totalKobo       Int
+  walletUsedKobo  Int                 @default(0)
+  paystackKobo    Int                 @default(0)
+  notes           String?
+  deliveryAddress String?
+  etaMinutes      Int
+  paymentRef      String?
+  user            User                @relation(fields: [userId], references: [id])
+  items           OrderItem[]
+  timeline        OrderTimeline[]
+  review          Review?
+  walletTxns      WalletTransaction[]
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  deliveredAt     DateTime?
+
+  @@index([userId, createdAt])
+}
+
+model OrderItem {
+  id                  String  @id @default(auto()) @map("_id") @db.ObjectId
+  orderId             String  @db.ObjectId
+  dishId              String  @db.ObjectId
+  dishName            String
+  dishImageUrl        String
+  unitPriceKobo       Int
+  quantity            Int
+  specialInstructions String?
+  lineTotalKobo       Int
+  order               Order   @relation(fields: [orderId], references: [id])
+  dish                Dish    @relation(fields: [dishId], references: [id])
+}
+
+model OrderTimeline {
+  id        String      @id @default(auto()) @map("_id") @db.ObjectId
+  orderId   String      @db.ObjectId
+  status    OrderStatus
+  note      String?
+  createdAt DateTime    @default(now())
+  order     Order       @relation(fields: [orderId], references: [id])
+
+  @@index([orderId, createdAt])
+}
+
+model Review {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  orderId   String   @unique @db.ObjectId
+  userId    String   @db.ObjectId
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+  order     Order    @relation(fields: [orderId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Complaint {
+  id        String          @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String?         @db.ObjectId
+  name      String
+  email     String
+  orderId   String?
+  message   String
+  status    ComplaintStatus @default(OPEN)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  user      User?           @relation(fields: [userId], references: [id])
+}

@@ -1,0 +1,91 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --hubbay-primary-emerald: 31 122 79;
+  --hubbay-accent-gold: 212 175 55;
+  --hubbay-background: 255 255 255;
+  --hubbay-surface: 248 250 247;
+  --hubbay-text: 31 42 37;
+  --hubbay-secondary: 74 92 82;
+  --hubbay-divider: 219 228 222;
+}
+
+.dark {
+  --hubbay-primary-emerald: 0 109 79;
+  --hubbay-accent-gold: 212 175 55;
+  --hubbay-background: 10 15 12;
+  --hubbay-surface: 18 26 23;
+  --hubbay-text: 245 237 225;
+  --hubbay-secondary: 168 181 162;
+  --hubbay-divider: 62 74 66;
+}
+
+* {
+  border-color: rgb(var(--hubbay-divider));
+}
+
+html,
+body {
+  min-height: 100%;
+  background-color: rgb(var(--hubbay-background));
+}
+
+body {
+  color: rgb(var(--hubbay-text));
+  font-family: var(--font-body), sans-serif;
+  font-feature-settings: "liga" 1, "calt" 1;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading), sans-serif;
+}
+
+.luxury-bg {
+  background:
+    radial-gradient(
+      1200px 600px at 12% -12%,
+      rgba(31, 122, 79, 0.09) 0%,
+      rgba(255, 255, 255, 0) 64%
+    ),
+    radial-gradient(
+      980px 520px at 88% -2%,
+      rgba(212, 175, 55, 0.12) 0%,
+      rgba(255, 255, 255, 0) 62%
+    ),
+    linear-gradient(180deg, #ffffff 0%, #f8faf7 100%);
+}
+
+.dark .luxury-bg {
+  background:
+    radial-gradient(
+      1200px 600px at 20% -10%,
+      rgba(0, 109, 79, 0.35) 0%,
+      rgba(10, 15, 12, 0) 60%
+    ),
+    radial-gradient(
+      900px 500px at 85% 0%,
+      rgba(212, 175, 55, 0.22) 0%,
+      rgba(10, 15, 12, 0) 60%
+    ),
+    linear-gradient(180deg, #0a0f0c 0%, #0a0f0c 100%);
+}
+
+.grid-overlay {
+  background-image:
+    linear-gradient(rgba(26, 26, 26, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(26, 26, 26, 0.04) 1px, transparent 1px);
+  background-size: 30px 30px;
+}
+
+.dark .grid-overlay {
+  background-image:
+    linear-gradient(rgba(168, 181, 162, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(168, 181, 162, 0.06) 1px, transparent 1px);
+}
